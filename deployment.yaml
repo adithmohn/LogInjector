@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: s3-opensearch-ingestor-service
+  labels: { app: s3-opensearch-ingestor }
+spec:
+  selector: { app: s3-opensearch-ingestor }
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s3-opensearch-ingestor
+  labels: { app: s3-opensearch-ingestor }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: s3-opensearch-ingestor }
+  template:
+    metadata:
+      labels: { app: s3-opensearch-ingestor }
+    spec:
+      serviceAccountName: uattest-s3-sa
+      containers:
+        - name: s3-opensearch-ingestor
+          image: ImageName
+          ports: [ { containerPort: 5000 } ]
+          env:
+            - name: AWS_REGION
+              value: ""
+            - name: S3_BUCKET
+              value: ""
+            - name: SQS_QUEUE_URL
+              value: ""
+            - name: OPENSEARCH_HOST
+              value: ""
+            - name: OPENSEARCH_INDEX
+              value: ""
+            - name: AUTO_INGEST_ON_START
+              value: "true"  # set true to ingest immediately on pod start
+            - name: LOG_LEVEL
+              value: "INFO" 
+          resources:
+            requests: { memory: "256Mi", cpu: "100m" }
+            limits: { memory: "512Mi", cpu: "500m" }
+          livenessProbe:
+            httpGet: { path: /health, port: 5000 }
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet: { path: /health, port: 5000 }
+            initialDelaySeconds: 15
+            periodSeconds: 10

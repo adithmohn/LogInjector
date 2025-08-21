@@ -1,0 +1,6 @@
+Flask
+boto3
+opensearch-py
+requests-aws4auth
+gunicorn
+python-dotenv
